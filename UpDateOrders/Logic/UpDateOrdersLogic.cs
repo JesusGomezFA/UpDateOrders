@@ -17,8 +17,7 @@ namespace UpDateOrders.Logic
 
         public static void CargarArchivo()
         {
-
-            GenerateTableOracle();
+            UpdateOrdersSql(GenerateTableOracle(SetTableHistoricalSql()));
         }
         //obtiene la cantidad datos de la consulta realizada a SQL
         public static DataTable SetTableHistoricalSql()
@@ -27,7 +26,8 @@ namespace UpDateOrders.Logic
             {
                 conSql.Open();
                 Console.WriteLine("Obteniendo data Sql");
-                string query = "select * from MM_DTMovistarP where FECHA_CIERRE_ORDEN is null OR  FECHA_CIERRE_ORDEN = ''";
+                string query = "select * from pruebas where FECHA_CIERRE_ORDEN is null OR  FECHA_CIERRE_ORDEN = ''";
+                //string query = "select * from MM_DTMovistarP where FECHA_CIERRE_ORDEN is null OR  FECHA_CIERRE_ORDEN = ''";
                 SqlDataAdapter Historico = new SqlDataAdapter(query, conSql);
                 DataTable DbHistorical = new DataTable();
                 Historico.Fill(DbHistorical);
@@ -36,7 +36,7 @@ namespace UpDateOrders.Logic
             }
         }
         //se ejecuta query de Oracle con los datos obtenidos de la consulta SQL
-        public static DataTable GenerateTableOracle()
+        public static DataTable GenerateTableOracle(DataTable DbHistorical)
         {
             using(SqlConnection connectioSql = new SqlConnection(GetConnectionSql()))
             {
@@ -51,7 +51,7 @@ namespace UpDateOrders.Logic
                     string query = "select * from MM_PGeneral where id = '2'";
                     SqlDataAdapter sqlDataAdapter = new SqlDataAdapter(query,connectioSql);
                     DataTable consultaOracle = new DataTable();
-                    consultaOracle = SetTableHistoricalSql().Copy();
+                    consultaOracle = DbHistorical.Copy();
                     DataTable dbOracle = new DataTable();
                     DataTable dataTableOracle = new DataTable();
                     sqlDataAdapter.Fill(dbOracle);
@@ -79,20 +79,36 @@ namespace UpDateOrders.Logic
             }
         }
         //metodo para realizar conexion con base de datos de SQL
-        public static void UpdateOrdersSql()
+        public static void UpdateOrdersSql(DataTable dataTableOracle)
         {
             using (SqlConnection connection = new SqlConnection(GetConnectionSql()))
             {
                 Console.WriteLine("Inicio Envio de informacion BD");
                 connection.Open();
+                string DateFile=;
                 DataTable dataTableBulkcopy = new DataTable();
-                dataTableBulkcopy = GenerateTableOracle().Copy();
+                dataTableBulkcopy = dataTableOracle.Copy();
                 if (dataTableBulkcopy.Rows.Count > 0)
                 {
-                    for(int i = 0; i < dataTableBulkcopy.Rows.Count; i++)
+                    Console.WriteLine("Update en base de datos");
+                    for (int i = 0; i < dataTableBulkcopy.Rows.Count; i++)
                     {
-                        SqlCommand sqlCommand = new SqlCommand("spUpdateMMDatos", connection);
-
+                        SqlCommand sqlCommand = new SqlCommand("update_Prueba", connection);
+                        if (!String.IsNullOrEmpty(dataTableBulkcopy.Rows[i]["FECHA_CIERRE_ORDEN"].ToString()))
+                        {
+                            sqlCommand.CommandType = CommandType.StoredProcedure;
+                            sqlCommand.Parameters.AddWithValue("@orderID", dataTableBulkcopy.Rows[i]["ORDER_ID"].ToString());
+                            sqlCommand.Parameters.AddWithValue("@fecha_creacion", dataTableBulkcopy.Rows[i]["FECHA_CREACION"].ToString().Length > 0 ? dataTableBulkcopy.Rows[i]["FECHA_CREACION"].ToString().Substring(0, 10) : "");
+                            sqlCommand.Parameters.AddWithValue("@estado_orden", dataTableBulkcopy.Rows[i]["ESTADO_ORDEN"].ToString());
+                            sqlCommand.Parameters.AddWithValue("@cliente", dataTableBulkcopy.Rows[i]["CLIENTE"].ToString());
+                            sqlCommand.Parameters.AddWithValue("@cuenta", dataTableBulkcopy.Rows[i]["CUENTA"].ToString());
+                            sqlCommand.Parameters.AddWithValue("@tipo_identificacion", dataTableBulkcopy.Rows[i]["TIPO_IDENTIFICACION"].ToString());
+                            sqlCommand.Parameters.AddWithValue("@numero_identificacion", dataTableBulkcopy.Rows[i]["NUMERO_IDENTIFICACION"].ToString());
+                            sqlCommand.Parameters.AddWithValue("@numero_celular", dataTableBulkcopy.Rows[i]["NUMERO_CELULAR"].ToString());
+                            sqlCommand.Parameters.AddWithValue("@fecha_cierre_orden", dataTableBulkcopy.Rows[i]["FECHA_CIERRE_ORDEN"].ToString().Length > 0 ? dataTableBulkcopy.Rows[i]["FECHA_CIERRE_ORDEN"].ToString().Substring(0, 10) : "");
+                            sqlCommand.Parameters.AddWithValue("@archivo", DateFile.ToString());
+                            sqlCommand.ExecuteNonQuery();
+                        }
                     }
                 }
                 else
@@ -171,7 +187,12 @@ namespace UpDateOrders.Logic
             }
             Console.WriteLine("Error Enviado a DB");
         }
+        //Genera la fecha con la cual se va a guardar el archivo
+        public static string GenerateDate()
+        {
 
+            return null;
+        }
 
     }
 }
