@@ -4,6 +4,7 @@
     {
         public string GetConnectionOracle()
         {
+            //el usuario en pruebas de debe de poner el del desarrollador
             string GET_CONNECTION_DB_ORACLE = "Data Source = (DESCRIPTION = (ADDRESS_LIST = (" +
                     "ADDRESS = (PROTOCOL = TCP)(HOST = 10.203.100.133)(PORT = 1527)))" +
                     "(CONNECT_DATA =(SERVICE_NAME =  crmdb)));" +
